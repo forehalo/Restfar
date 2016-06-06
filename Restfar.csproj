@@ -107,8 +107,15 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes\DeleteAttribute.cs" />
     <Compile Include="Attributes\GetAttribute.cs" />
+    <Compile Include="Attributes\HeadersAttribute.cs" />
+    <Compile Include="Attributes\MultipartAttribute.cs" />
+    <Compile Include="Attributes\OptionAttribute.cs" />
+    <Compile Include="Attributes\PatchAttribute.cs" />
     <Compile Include="Attributes\PathAttribute.cs" />
+    <Compile Include="Attributes\PostAttribute.cs" />
+    <Compile Include="Attributes\PutAttribute.cs" />
     <Compile Include="DefaultDispatchProxy.cs" />
     <Compile Include="RestfarClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
