@@ -7,7 +7,14 @@ namespace Restfar
     /// </summary>
     public class RestfarClient
     {
-        public static T Create<T>()
+        public static string BaseUri { get; set; }
+
+        public RestfarClient(string baseUri)
+        {
+            BaseUri = baseUri.TrimEnd('/') + "/";
+        }
+
+        public T Create<T>()
         {
             return DispatchProxy.Create<T, DefaultDispatchProxy>();
         }
@@ -18,7 +25,7 @@ namespace Restfar
             //TODO Cache
             if (result == null)
             {
-                result = new ServiceMethod(targetMethod);
+                result = new ServiceMethod(targetMethod, BaseUri);
             }
             return result;
         }
