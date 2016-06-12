@@ -2,11 +2,10 @@
 
 namespace Restfar.Attributes
 {
-    [AttributeUsage(AttributeTargets.Method)]
-    public class OptionAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Parameter)]
+    public class FieldAttribute : Attribute
     {
-
-        public OptionAttribute(string value = "")
+        public FieldAttribute(string value = "")
         {
             Value = value;
         }
