@@ -35,7 +35,12 @@ namespace Restfar
             BaseUri = baseUri;
             MethodAttributes = method.GetCustomAttributes() as Attribute[];
             Parameters = method.GetParameters();
+            ProcessRequestMethod();
+        }
 
+
+        private void ProcessRequestMethod()
+        {
             ParseMethodAttributes();
 
             if (string.IsNullOrEmpty(HttpMethod))
@@ -55,6 +60,49 @@ namespace Restfar
                     throw new ArgumentException("FormUrlEncoded can only be specified on HTTP methods with "
                         + "request body (e.g., @POST).");
                 }
+            }
+        }
+
+        private void ProcessParameters()
+        {
+
+        }
+
+        public async Task<T> Call<T>(T returnType, object[] args)
+        {
+            var httpClient = new HttpClient();
+
+            var request = new RequestBuilder(HttpMethod, BaseUri, RelativeUrl, args).Bulid();
+
+            //var result = await httpClient.GetAsync(new Uri("https://api.dribbble.com/v1/users/1135619/buckets?access_token=1d4e28bdbef36dbf2a8dc2cdf4b25a996c356d8defe3439371d2b153a008e915"));
+            try
+            {
+                var result = await httpClient.SendRequestAsync(request);
+
+                if (result.IsSuccessStatusCode)
+                {
+                    //OnSuccessHandler?.invoke();
+                }
+                else
+                {
+                    //OnFailureHanlder?.invoke();
+                }
+
+                var content = await result?.Content.ReadAsStringAsync();
+
+                if (returnType != null)
+                {
+                    return JsonConvert.DeserializeObject<T>(content);
+                }
+                else
+                {
+                    return default(T);
+                }
+
+            }
+            catch
+            {
+                throw new AggregateException("Http Request return with a exception, please check your network.");
             }
         }
 

@@ -109,10 +109,11 @@
   <ItemGroup>
     <Compile Include="Attributes\DeleteAttribute.cs" />
     <Compile Include="Attributes\FieldAttribute.cs" />
+    <Compile Include="Attributes\FormUrlEncodedAttribute.cs" />
     <Compile Include="Attributes\GetAttribute.cs" />
     <Compile Include="Attributes\HeadersAttribute.cs" />
     <Compile Include="Attributes\MultipartAttribute.cs" />
-    <Compile Include="Attributes\OptionAttribute.cs" />
+    <Compile Include="Attributes\OptionsAttribute.cs" />
     <Compile Include="Attributes\PatchAttribute.cs" />
     <Compile Include="Attributes\PathAttribute.cs" />
     <Compile Include="Attributes\PostAttribute.cs" />
