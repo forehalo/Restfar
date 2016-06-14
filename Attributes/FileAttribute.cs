@@ -3,7 +3,7 @@
 namespace Restfar.Attributes
 {
     [AttributeUsage(AttributeTargets.Parameter)]
-    class FileAttribute : Attribute
+    public class FileAttribute : Attribute
     {
         public FileAttribute(string value)
         {
@@ -11,7 +11,5 @@ namespace Restfar.Attributes
         }
 
         public string Value { get; set; }
-
-        public string FileName { get; set; }
     }
 }

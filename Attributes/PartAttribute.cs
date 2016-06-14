@@ -3,7 +3,7 @@
 namespace Restfar.Attributes
 {
     [AttributeUsage(AttributeTargets.Parameter)]
-    class PartAttribute : Attribute
+    public class PartAttribute : Attribute
     {
         public PartAttribute(string value)
         {
