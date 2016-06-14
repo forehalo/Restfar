@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Restfar.Attributes;
 using System.Text.RegularExpressions;
+using Windows.Storage.Streams;
+using Windows.Storage;
 
 namespace Restfar
 {
@@ -14,7 +16,6 @@ namespace Restfar
     /// </summary>
     public class ServiceMethod
     {
-        const string PARAM = "[a-zA-Z][a-zA-Z0-9_-]*";
         const string PARAM_URL_REGEX = "{([a-zA-Z][a-zA-Z0-9_-]*)}";
 
 
@@ -27,7 +28,7 @@ namespace Restfar
         private bool IsMultipart { get; set; }
         private bool HasBody { get; set; }
         private string RelativeUrl { get; set; }
-        private HashSet<string> RelativeUrlParamNames { get; set; }
+        private HashSet<string> RelativeUrlParamNames { get; set; } = new HashSet<string>();
 
         public ServiceMethod(MethodInfo method, string baseUri)
         {
@@ -36,6 +37,7 @@ namespace Restfar
             MethodAttributes = method.GetCustomAttributes() as Attribute[];
             Parameters = method.GetParameters();
             ProcessRequestMethod();
+            //ProcessParameters();
         }
 
 
@@ -63,42 +65,40 @@ namespace Restfar
             }
         }
 
-        private void ProcessParameters()
+        private void ProcessParameters(RequestBuilder builder, object[] args)
         {
-
+            int parameterCount = Parameters.Length;
+            for(int i = 0; i < parameterCount; i++)
+            {
+                ParseParameter(builder, Parameters[i], args[i]);
+            }
         }
 
         public async Task<T> Call<T>(T returnType, object[] args)
         {
             var httpClient = new HttpClient();
 
-            var request = new RequestBuilder(HttpMethod, BaseUri, RelativeUrl, args).Bulid();
-
-            //var result = await httpClient.GetAsync(new Uri("https://api.dribbble.com/v1/users/1135619/buckets?access_token=1d4e28bdbef36dbf2a8dc2cdf4b25a996c356d8defe3439371d2b153a008e915"));
+            var requestBuilder = new RequestBuilder(HttpMethod, BaseUri, RelativeUrl, HasBody, IsFormEncoded, IsMultipart);
+            ProcessParameters(requestBuilder, args);
             try
             {
-                var result = await httpClient.SendRequestAsync(request);
+                var result = await httpClient.SendRequestAsync(requestBuilder.GetRequest());
 
                 if (result.IsSuccessStatusCode)
                 {
-                    //OnSuccessHandler?.invoke();
+                    if (returnType != null)
+                    {
+                        var content = await result?.Content.ReadAsStringAsync();
+                        return JsonConvert.DeserializeObject<T>(content);
+                    }
+                    //OnSuccessHandler?.invoke(result);
+                    return default(T);
                 }
                 else
                 {
                     //OnFailureHanlder?.invoke();
-                }
-
-                var content = await result?.Content.ReadAsStringAsync();
-
-                if (returnType != null)
-                {
-                    return JsonConvert.DeserializeObject<T>(content);
-                }
-                else
-                {
                     return default(T);
                 }
-
             }
             catch
             {
@@ -136,7 +136,7 @@ namespace Restfar
                     }
                     IsFormEncoded = true;
                 }
-        }
+            }
         }
 
         private void ParseMethodNameAndPath(string httpMethod, string value, bool hasBody = false)
@@ -170,19 +170,65 @@ namespace Restfar
             }
 
             RelativeUrl = value;
-            RelativeUrlParamNames = ParsePathParameters(value);
+            ParsePathParameters(value);
         }
 
-        private HashSet<string> ParsePathParameters(string path)
+        private void ParsePathParameters(string path)
         {
-            var patterns = new HashSet<string>();
             var matchs = Regex.Matches(path, PARAM_URL_REGEX, RegexOptions.Compiled);
 
             foreach(Match m in matchs)
             {
-                patterns.Add(m.Groups[1].Value);
+                RelativeUrlParamNames.Add(m.Groups[1].Value);
             }
-            return patterns;
+        }
+
+        private void ParseParameter(RequestBuilder builder, ParameterInfo parameter, object argument)
+        {
+            var attributes = parameter.GetCustomAttributes() as Attribute[];
+
+            foreach(var attr in attributes)
+            {
+                if (attr is PathAttribute)
+                {
+                    var tmp = attr as PathAttribute;
+                    if (RelativeUrlParamNames.Contains(tmp.Value))
+                    {
+                        builder.AddPath(tmp.Value, argument.ToString());
+                        continue;
+                    }
+                    throw new ArgumentException("Specified path \"" + tmp.Value + "\" not found");
+                }
+                else if (attr is FieldAttribute)
+                {
+                    if (!IsFormEncoded)
+                        throw new ArgumentException("Field parameters can only be used with form encoding.");
+
+                    builder.AddField((attr as FieldAttribute).Value, argument.ToString());
+                }
+                else if (attr is PartAttribute)
+                {
+                    if (!IsMultipart)
+                        throw new ArgumentException("Part parameters can only be used with multipart encoding.");
+
+                    builder.AddPart((attr as PartAttribute).Value, argument.ToString());
+                }
+                else if (attr is QueryAttribute)
+                {
+                    builder.AddQeuryString((attr as QueryAttribute).Value, argument.ToString());
+                }
+                else if (attr is FileAttribute)
+                {
+                    if (!IsMultipart)
+                        throw new ArgumentException("File parameters can only be used with multipart encoding.");
+
+                    var tmp = attr as FileAttribute;
+                    var file = argument as StorageFile;
+                    var filestream = file.OpenReadAsync().AsTask();
+
+                    builder.AddFile(tmp.Value, filestream.Result, file.Name);
+                }
+            }
         }
 
     }
