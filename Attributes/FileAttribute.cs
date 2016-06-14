@@ -5,11 +5,13 @@ namespace Restfar.Attributes
     [AttributeUsage(AttributeTargets.Parameter)]
     class FileAttribute : Attribute
     {
-        public FileAttribute(string filePath)
+        public FileAttribute(string value)
         {
-            FilePath = filePath;
+            Value = value;
         }
 
-        public string FilePath { get; set; }
+        public string Value { get; set; }
+
+        public string FileName { get; set; }
     }
 }
