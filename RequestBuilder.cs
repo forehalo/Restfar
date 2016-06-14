@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Windows.Storage.Streams;
 using Windows.Web.Http;
-using Windows.Web.Http.Headers;
 
 namespace Restfar
 {
@@ -18,13 +17,11 @@ namespace Restfar
         private IHttpContent Form;
         private bool IsFormEncoded;
         private bool IsMultipart;
-        private HttpRequestHeaderCollection Headers;
 
         public RequestBuilder(string httpMethod, string baseUri, string relativeUri, bool hasBody, bool isFormEncoded, bool isMultipart)
         {
             Request = new HttpRequestMessage();
             Request.Method = new HttpMethod(httpMethod);
-            Headers = Request.Headers;
             BaseUri = baseUri;
             RelativeUri = relativeUri;
             HasBody = hasBody;
@@ -45,7 +42,7 @@ namespace Restfar
             {
                 Form = new HttpFormUrlEncodedContent(Fields);
             }
-
+            Request.RequestUri = new Uri(BaseUri + RelativeUri);
             Request.Content = Form;
             return Request;
         }
@@ -64,21 +61,14 @@ namespace Restfar
 
         public void AddHeader(string key, string value)
         {
-            if (Headers.ContainsKey(key))
+            if (Request.Headers.ContainsKey(key))
             {
-                Headers.Remove(key);
-            }
-            if (Form != null && Form.Headers.ContainsKey(key))
-            {
-                Form.Headers.Remove(key);
+                Request.Headers.Remove(key);
             }
 
             if (value == null) return;
 
-            if (Headers.TryAppendWithoutValidation(key, value) && Form != null)
-            {
-                Form.Headers.TryAppendWithoutValidation(key, value);
-            }
+            Request.Headers.TryAppendWithoutValidation(key, value);
         }
 
         public void AddField(string name, string value)
@@ -92,10 +82,19 @@ namespace Restfar
             ((HttpMultipartFormDataContent)Form).Add(new HttpStringContent(value), name);
         }
 
-        public void AddFile(string name, IInputStream stream, string fileName = null)
+        public void AddFile(string name, IInputStream stream, string fileName)
         {
             EnsureMultipart();
             ((HttpMultipartFormDataContent)Form).Add(new HttpStreamContent(stream), name, fileName);
+        }
+
+        public void AddPath(string name, string value)
+        {
+            if (string.IsNullOrEmpty(RelativeUri))
+            {
+                throw new ArgumentException("No path found in given relative uri: " + RelativeUri);
+            }
+            RelativeUri = RelativeUri.Replace("{" + name + "}", value);
         }
 
         private void EnsureMultipart()
