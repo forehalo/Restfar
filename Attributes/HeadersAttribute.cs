@@ -2,16 +2,13 @@
 
 namespace Restfar.Attributes
 {
-    [AttributeUsage(AttributeTargets.Method)]
-    public class HeaderAttribute : Attribute
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Interface)]
+    public class HeadersAttribute : Attribute
     {
-        public HeaderAttribute(string field, string value)
+        public HeadersAttribute(string[] value)
         {
-            Field = field;
             Value = value;
         }
-
-        public string Field { get; set; }
-        public string Value { get; set; }
+        public string[] Value { get; set; } = { };
     }
 }
