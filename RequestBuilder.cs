@@ -51,7 +51,7 @@ namespace Restfar
         }
 
 
-        private void ParseHeaders(string[] headers)
+        public void ParseHeaders(string[] headers)
         {
             foreach (var header in headers)
             {

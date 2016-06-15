@@ -259,6 +259,10 @@ namespace Restfar
 
                     builder.AddFile(tmp.Value, filestream.Result, file.Name);
                 }
+                else if (attr is HeadersAttribute)
+                {
+                    builder.ParseHeaders(argument as string[]);
+                }
                 else if(attr is SuccessAttribute)
                 {
                     if (argument is RequestSuccessHandler)
