@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Restfar.Attributes;
 using System.Text.RegularExpressions;
-using Windows.Storage.Streams;
 using Windows.Storage;
+using System.Linq;
 
 namespace Restfar
 {
@@ -22,7 +22,9 @@ namespace Restfar
         private MethodInfo Method { get; set; }
         private string BaseUri { get; set; }
         private Attribute[] MethodAttributes { get; set; }
+        private Attribute[] ServiceAttributes { get; set; }
         private ParameterInfo[] Parameters { get; set; }
+        private string[] HeadersToParse { get; set; } = { };
         private string HttpMethod { get; set; }
         private bool IsFormEncoded { get; set; }
         private bool IsMultipart { get; set; }
@@ -35,11 +37,22 @@ namespace Restfar
             Method = method;
             BaseUri = baseUri;
             MethodAttributes = method.GetCustomAttributes() as Attribute[];
+            ServiceAttributes = method.DeclaringType.GetTypeInfo().GetCustomAttributes() as Attribute[];
             Parameters = method.GetParameters();
             ProcessRequestMethod();
-            //ProcessParameters();
+            ProcessService();
         }
 
+        private void ProcessService()
+        {
+            foreach(var attr in ServiceAttributes)
+            {
+                if(attr is HeadersAttribute)
+                {
+                    HeadersToParse = HeadersToParse.Concat((attr as HeadersAttribute).Value).ToArray();
+                }
+            }
+        }
 
         private void ProcessRequestMethod()
         {
@@ -78,7 +91,7 @@ namespace Restfar
         {
             var httpClient = new HttpClient();
 
-            var requestBuilder = new RequestBuilder(HttpMethod, BaseUri, RelativeUrl, HasBody, IsFormEncoded, IsMultipart);
+            var requestBuilder = new RequestBuilder(HttpMethod, HeadersToParse, BaseUri, RelativeUrl, HasBody, IsFormEncoded, IsMultipart);
             ProcessParameters(requestBuilder, args);
             try
             {
@@ -122,7 +135,18 @@ namespace Restfar
                 else if (attr is PutAttribute)
                     ParseMethodNameAndPath("PUT", ((PutAttribute)attr).Value, true);
                 else if (attr is OptionsAttribute)
-                    ParseMethodNameAndPath("OPTIONS", ((OptionsAttribute)attr).Value, false);
+                    ParseMethodNameAndPath("OPTIONS", ((OptionsAttribute)attr).Value);
+                else if (attr is HeadAttribute)
+                    ParseMethodNameAndPath("HEAD", ((OptionsAttribute)attr).Value);
+                else if (attr is HeadersAttribute)
+                {
+                    HeadersToParse = HeadersToParse.Concat((attr as HeadersAttribute).Value).ToArray();
+
+                    if (HeadersToParse.Length == 0)
+                    {
+                        throw new ArgumentException("Headers is empty");
+                    }
+                }
                 else if (attr is MultipartAttribute) {
                     if (IsFormEncoded)
                     {

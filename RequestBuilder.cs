@@ -18,10 +18,13 @@ namespace Restfar
         private bool IsFormEncoded;
         private bool IsMultipart;
 
-        public RequestBuilder(string httpMethod, string baseUri, string relativeUri, bool hasBody, bool isFormEncoded, bool isMultipart)
+        public RequestBuilder(string httpMethod, string[] headersToParse, string baseUri, string relativeUri, bool hasBody, bool isFormEncoded, bool isMultipart)
         {
             Request = new HttpRequestMessage();
             Request.Method = new HttpMethod(httpMethod);
+
+            ParseHeaders(headersToParse);
+
             BaseUri = baseUri;
             RelativeUri = relativeUri;
             HasBody = hasBody;
@@ -45,6 +48,27 @@ namespace Restfar
             Request.RequestUri = new Uri(BaseUri + RelativeUri);
             Request.Content = Form;
             return Request;
+        }
+
+
+        private void ParseHeaders(string[] headers)
+        {
+            foreach (var header in headers)
+            {
+                if (string.IsNullOrEmpty(header))
+                {
+                    throw new ArgumentException("Header content must not be empty.");
+                }
+
+                var keyValue = header.Split(':');
+
+                if(keyValue.Length != 2)
+                {
+                    throw new ArgumentException("Header name and value must not be empty. Check the headers format(eg. {\" custom-header : header content\", \" another-header : another\"})");
+                }
+
+                AddHeader(keyValue[0].Trim(), keyValue[1].Trim());
+            }
         }
 
         public void AddQeuryString(string name, string value)
