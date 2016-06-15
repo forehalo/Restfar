@@ -109,6 +109,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attributes\DeleteAttribute.cs" />
+    <Compile Include="Attributes\FailureAttribute.cs" />
     <Compile Include="Attributes\FieldAttribute.cs" />
     <Compile Include="Attributes\FileAttribute.cs" />
     <Compile Include="Attributes\FormUrlEncodedAttribute.cs" />
@@ -122,6 +123,7 @@
     <Compile Include="Attributes\PostAttribute.cs" />
     <Compile Include="Attributes\PutAttribute.cs" />
     <Compile Include="Attributes\QueryAttribute.cs" />
+    <Compile Include="Attributes\SuccessAttribute.cs" />
     <Compile Include="DefaultDispatchProxy.cs" />
     <Compile Include="Attributes\PartAttribute.cs" />
     <Compile Include="RequestBuilder.cs" />

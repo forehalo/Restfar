@@ -11,14 +11,17 @@ using System.Linq;
 
 namespace Restfar
 {
+
+    public delegate void RequestSuccessHandler(HttpResponseMessage response);
+    public delegate void RequestFailureHandler(HttpResponseMessage response);
+
     /// <summary>
     /// 
     /// </summary>
     public class ServiceMethod
     {
         const string PARAM_URL_REGEX = "{([a-zA-Z][a-zA-Z0-9_-]*)}";
-
-
+        
         private MethodInfo Method { get; set; }
         private string BaseUri { get; set; }
         private Attribute[] MethodAttributes { get; set; }
@@ -31,6 +34,9 @@ namespace Restfar
         private bool HasBody { get; set; }
         private string RelativeUrl { get; set; }
         private HashSet<string> RelativeUrlParamNames { get; set; } = new HashSet<string>();
+
+        public event RequestSuccessHandler OnSuccess;
+        public event RequestFailureHandler OnFailure;
 
         public ServiceMethod(MethodInfo method, string baseUri)
         {
@@ -99,17 +105,18 @@ namespace Restfar
 
                 if (result.IsSuccessStatusCode)
                 {
+                    OnSuccess?.Invoke(result);
+
                     if (returnType != null)
                     {
                         var content = await result?.Content.ReadAsStringAsync();
                         return JsonConvert.DeserializeObject<T>(content);
                     }
-                    //OnSuccessHandler?.invoke(result);
                     return default(T);
                 }
                 else
                 {
-                    //OnFailureHanlder?.invoke();
+                    OnFailure?.Invoke(result);
                     return default(T);
                 }
             }
@@ -251,6 +258,20 @@ namespace Restfar
                     var filestream = file.OpenReadAsync().AsTask();
 
                     builder.AddFile(tmp.Value, filestream.Result, file.Name);
+                }
+                else if(attr is SuccessAttribute)
+                {
+                    if (argument is RequestSuccessHandler)
+                        OnSuccess += (argument as RequestSuccessHandler);
+                    else
+                        throw new ArgumentException("Request success handler must be type of \"RequestSuccessHandler\".");
+                }
+                else if(attr is FailureAttribute)
+                {
+                    if (argument is RequestFailureHandler)
+                        OnFailure += (argument as RequestFailureHandler);
+                    else
+                        throw new ArgumentException("Request failure handler must be type of \"RequestFailureHandler\".");
                 }
             }
         }
