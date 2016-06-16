@@ -56,6 +56,7 @@ Every method must have an HTTP Method Attribute to specify the request method an
 
 ```c#
 [Get("/users?list=all")]
+Task<List<User>> GetUsers();
 ```
 
 ### Dynamic URL
@@ -117,12 +118,12 @@ When send a post request, form will be encoded before send. You can use `Filed` 
 Task CreateUser([Field("username")] string username, [Field("password")] string password);
 ```
 
-Multipart requests allow to send with files using `File` attribute.
+Multipart requests allow to send with files using `File` attribute, add form part using `Part` attribute.
 
 ```c#
 [Multipart]
 [Post("users/{user}/avatar")]
-Task UploadAvatar([Path("user")] string username,[File("file")] StorageFile file);
+Task UploadAvatar([Path("user")] string username, [Part("id")] int id, [File("file")] StorageFile file);
 ```
 
 ### Event

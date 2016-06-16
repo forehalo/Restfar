@@ -2,7 +2,7 @@
 
 namespace Restfar.Attributes
 {
-    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Parameter)]
+    [AttributeUsage(AttributeTargets.Parameter)]
     public class SuccessAttribute : Attribute
     {
     }

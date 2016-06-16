@@ -264,15 +264,15 @@ namespace Restfar
                 }
                 else if(attr is SuccessAttribute)
                 {
-                    if (argument is RequestSuccessHandler)
-                        OnSuccess += (argument as RequestSuccessHandler);
+                    if (argument is ResponseHandler)
+                        OnSuccess += (argument as ResponseHandler);
                     else
                         throw new ArgumentException("Request success handler must be type of \"RequestSuccessHandler\".");
                 }
                 else if(attr is FailureAttribute)
                 {
-                    if (argument is RequestFailureHandler)
-                        OnFailure += (argument as RequestFailureHandler);
+                    if (argument is ResponseHandler)
+                        OnFailure += (argument as ResponseHandler);
                     else
                         throw new ArgumentException("Request failure handler must be type of \"RequestFailureHandler\".");
                 }
