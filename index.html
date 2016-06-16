@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Restfar by forehalo</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Restfar</h1>
+        <h2>A restful API client for uwp</h2>
+        <a href="https://github.com/forehalo/Restfar" class="button"><small>View project on</small> GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h2>
+<a id="restfar-v1" class="anchor" href="#restfar-v1" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Restfar V1</h2>
+
+<p>Currently an excellent RESTful http client for UWP(Universal Windows Plateform) application, type-safe, elegant.</p>
+
+<p>It's inspired by <a href="http://square.github.io/retrofit/">Retrofit</a>.</p>
+
+<h2>
+<a id="install" class="anchor" href="#install" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Install</h2>
+
+<p>You can install it from <a href="https://www.nuget.org/packages/Restfar">nuget</a> or run the following command in the <code>Package Manager Console</code> in Visual Studio</p>
+
+<pre><code>PM&gt; Install-Package Restfar
+</code></pre>
+
+<p>The only one dependency is <a href="https://www.nuget.org/packages/Newtonsoft.Json/">Newtonsoft.Json</a>, nuget will automatic install this for you.</p>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h2>
+
+<h3>
+<a id="basic" class="anchor" href="#basic" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Basic</h3>
+
+<p>Restfar turns your HTTP API into a interface:</p>
+
+<div class="highlight highlight-source-cs"><pre><span class="pl-k">public</span> <span class="pl-k">interface</span> <span class="pl-en">APIService</span>
+{
+    [Get(<span class="pl-s"><span class="pl-pds">"</span>/users/{user}<span class="pl-pds">"</span></span>)]
+    Task&lt;User&gt; <span class="pl-en">GetUser</span>([Path(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> user);
+
+    [FormUrlEncoded]
+    [Post(<span class="pl-s"><span class="pl-pds">"</span>users<span class="pl-pds">"</span></span>)]
+    Task <span class="pl-en">CreateUser</span>([Field(<span class="pl-s"><span class="pl-pds">"</span>username<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> username, [<span class="pl-en">Field</span>(<span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> password);
+}</pre></div>
+
+<p>After define your API, use <code>RestfarClient</code> to create an instance of your <code>APIService</code> interface.</p>
+
+<div class="highlight highlight-source-cs"><pre><span class="pl-k">var</span> restfar = <span class="pl-k">new</span> RestfarClient(<span class="pl-s"><span class="pl-pds">"</span>https://api.github.com<span class="pl-pds">"</span></span>);
+<span class="pl-k">var</span> API = restfar.Create&lt;APIService&gt;(); <span class="pl-c">// return an instance of type APIService </span></pre></div>
+
+<p>Then, call the API! Unimaginable!</p>
+
+<div class="highlight highlight-source-cs"><pre><span class="pl-k">var</span> user = <span class="pl-k">await</span> API.GetUser(<span class="pl-s"><span class="pl-pds">'</span>forehalo<span class="pl-pds">'</span></span>);</pre></div>
+
+<h3>
+<a id="api-declaration" class="anchor" href="#api-declaration" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>API Declaration</h3>
+
+<p>Restfar uses C# attribute to define your API. You can custom the URL, headers, query strings.</p>
+
+<p><strong>Reqeust Method</strong></p>
+
+<p>Every method must have an HTTP Method Attribute to specify the request method and relative URL. Six build-in attributes enable:
+<code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>, <code>HEAD</code> and <code>OPTIONS</code>. These attribute can only decorate method. Query string is allowable.</p>
+
+<div class="highlight highlight-source-cs"><pre>[Get(<span class="pl-s"><span class="pl-pds">"</span>/users?list=all<span class="pl-pds">"</span></span>)]
+Task&lt;List&lt;User&gt;&gt; GetUsers();</pre></div>
+
+<h3>
+<a id="dynamic-url" class="anchor" href="#dynamic-url" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Dynamic URL</h3>
+
+<p>Not only const relative Url can be used. You can use replacement blocks as placeholder and replace it at runtime. A replacement block is
+a string surrounded by <code>{</code> and <code>}</code>. There must be a <code>Path</code> attribute using the same string with placeholder. An ArgumentException will be thown if
+<code>Path</code> attribute added but no the same name placeholder.</p>
+
+<div class="highlight highlight-source-cs"><pre>[Get(<span class="pl-s"><span class="pl-pds">"</span>/users/{user}<span class="pl-pds">"</span></span>)]
+Task&lt;User&gt; GetUser([Path(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> user);</pre></div>
+
+<p>Add query string using <code>Qeury</code> attribute.</p>
+
+<div class="highlight highlight-source-cs"><pre>[Get(<span class="pl-s"><span class="pl-pds">"</span>/users/{user}<span class="pl-pds">"</span></span>)]
+Task&lt;User&gt; GetUser([Path(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> user, [Query(<span class="pl-s"><span class="pl-pds">"</span>list<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> list);</pre></div>
+
+<h3>
+<a id="headers" class="anchor" href="#headers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Headers</h3>
+
+<p>There are three ways to custom your headers, ** global(static), method(static), parameter(dynamic) **.
+All of them use a <code>Header</code> attribute which need an array of string as parameter.</p>
+
+<p>You may want to add a same header to each HTTP request. Writing <code>Headers</code> again and again is foolish. So, a convenient way:</p>
+
+<div class="highlight highlight-source-cs"><pre>[Headers(<span class="pl-k">new</span> []{<span class="pl-s"><span class="pl-pds">"</span>global-header: content<span class="pl-pds">"</span></span>})]
+<span class="pl-k">public</span> <span class="pl-k">interface</span> <span class="pl-en">APIService</span>{}</pre></div>
+
+<p>Add headers to one method:</p>
+
+<div class="highlight highlight-source-cs"><pre>[Headers(<span class="pl-k">new</span> []{<span class="pl-s"><span class="pl-pds">"</span>method-header: content<span class="pl-pds">"</span></span>})]
+[Get(<span class="pl-s"><span class="pl-pds">"</span>/users/{user}<span class="pl-pds">"</span></span>)]
+Task&lt;User&gt; GetUser([Path(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> user);</pre></div>
+
+<p>Add headers dynamic when called:</p>
+
+<div class="highlight highlight-source-cs"><pre>[Get(<span class="pl-s"><span class="pl-pds">"</span>/users/{user}<span class="pl-pds">"</span></span>)]
+Task&lt;User&gt; GetUser([Path(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> user, [Headers] <span class="pl-k">string</span>[] headers);
+
+
+<span class="pl-k">string</span>[] headers = {<span class="pl-s"><span class="pl-pds">"</span>dynamic-header: content<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>header2: content<span class="pl-pds">"</span></span>}
+<span class="pl-k">await</span> GetUser(<span class="pl-s"><span class="pl-pds">"</span>forehalo<span class="pl-pds">"</span></span>, headers);</pre></div>
+
+<h3>
+<a id="form-encoded-and-multipart" class="anchor" href="#form-encoded-and-multipart" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Form encoded and multipart</h3>
+
+<p>Form will be encoded before send post request. You can use <code>Field</code> attribute to add field to the form.</p>
+
+<div class="highlight highlight-source-cs"><pre>[FormUrlEncoded]
+[Post(<span class="pl-s"><span class="pl-pds">"</span>users<span class="pl-pds">"</span></span>)]
+Task CreateUser([Field(<span class="pl-s"><span class="pl-pds">"</span>username<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> username, [Field(<span class="pl-s"><span class="pl-pds">"</span>password<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> password);</pre></div>
+
+<p>Multipart requests allow to send with files using <code>File</code> attribute, add form part using <code>Part</code> attribute.</p>
+
+<div class="highlight highlight-source-cs"><pre>[Multipart]
+[Post(<span class="pl-s"><span class="pl-pds">"</span>users/{user}/avatar<span class="pl-pds">"</span></span>)]
+Task UploadAvatar([Path(<span class="pl-s"><span class="pl-pds">"</span>user<span class="pl-pds">"</span></span>)] <span class="pl-k">string</span> username, [Part(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>)] <span class="pl-k">int</span> id, [File(<span class="pl-s"><span class="pl-pds">"</span>file<span class="pl-pds">"</span></span>)] StorageFile file);</pre></div>
+
+<h3>
+<a id="event" class="anchor" href="#event" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Event</h3>
+
+<p>An event named <code>OnSuccess</code> occured if response returned with status code between <code>200</code> and <code>300</code>, 
+else another event named <code>OnFailure</code> occured. 
+You could bind the event with an event handler, only one argument passed to handler which is the raw <a href="https://msdn.microsoft.com/library/windows/apps/dn279631"><code>HttpResponseMessage</code></a> instance</p>
+
+<div class="highlight highlight-source-cs"><pre>[Get(<span class="pl-s"><span class="pl-pds">"</span>/users<span class="pl-pds">"</span></span>)]
+Task&lt;User&gt; GetUser([Success] ResponseHanlder OnSuccess, [Failure] ResponseHanlder OnFailure);
+
+
+<span class="pl-k">private</span> <span class="pl-k">void</span> OnSuccess(HttpResponseMessage response)
+{
+    <span class="pl-c">//</span>
+}
+
+<span class="pl-k">private</span> <span class="pl-k">void</span> OnFailure(HttpResponseMessage response)
+{
+    <span class="pl-c">//</span>
+}
+
+<span class="pl-k">var</span> result = <span class="pl-k">await</span> API.GetUser(OnSuccess, OnFailure);</pre></div>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>LICENSE</h2>
+
+<p>Copyright 2016 Forehalo</p>
+
+<p>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+
+<pre><code>http://www.apache.org/licenses/LICENSE-2.0
+</code></pre>
+
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/forehalo/Restfar/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/forehalo/Restfar/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/forehalo/Restfar"></a> is maintained by <a href="https://github.com/forehalo">forehalo</a>.</p>
+
+          <p>This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the Architect theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
