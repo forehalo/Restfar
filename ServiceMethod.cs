@@ -12,8 +12,7 @@ using System.Linq;
 namespace Restfar
 {
 
-    public delegate void RequestSuccessHandler(HttpResponseMessage response);
-    public delegate void RequestFailureHandler(HttpResponseMessage response);
+    public delegate void ResponseHandler(HttpResponseMessage response);
 
     /// <summary>
     /// 
@@ -35,8 +34,8 @@ namespace Restfar
         private string RelativeUrl { get; set; }
         private HashSet<string> RelativeUrlParamNames { get; set; } = new HashSet<string>();
 
-        public event RequestSuccessHandler OnSuccess;
-        public event RequestFailureHandler OnFailure;
+        public event ResponseHandler OnSuccess;
+        public event ResponseHandler OnFailure;
 
         public ServiceMethod(MethodInfo method, string baseUri)
         {

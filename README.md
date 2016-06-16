@@ -125,6 +125,33 @@ Multipart requests allow to send with files using `File` attribute.
 Task UploadAvatar([Path("user")] string username,[File("file")] StorageFile file);
 ```
 
+### Event
+
+An event named `OnSuccess` occured if response returned with status code between `200` and `300`, 
+else another event named `OnFailure` occured. 
+You could bind the event with an event handler, only one argument passed to handler which is the raw [`HttpResponseMessage`](https://msdn.microsoft.com/library/windows/apps/dn279631) instance
+
+```c#
+[Get("/users")]
+Task<User> GetUser([Success] ResponseHanlder OnSuccess, [Failure] ResponseHanlder OnFailure);
+
+
+private void OnSuccess(HttpResponseMessage response)
+{
+    //
+}
+
+private void OnFailure(HttpResponseMessage response)
+{
+    //
+}
+
+var result = await API.GetUser(OnSuccess, OnFailure);
+```
+
+
+
+
 ## LICENSE
 
 Copyright 2016 Forehalo
