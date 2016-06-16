@@ -110,7 +110,7 @@ await GetUser("forehalo", headers);
 
 ### Form encoded and multipart
 
-When send a post request, form will be encoded before send. You can use `Filed` attribute to add filed to the form.
+Form will be encoded before send post request. You can use `Field` attribute to add field to the form.
 
 ```c#
 [FormUrlEncoded]
