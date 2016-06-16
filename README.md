@@ -49,7 +49,7 @@ var user = await API.GetUser('forehalo');
 
 Restfar uses C# attribute to define your API. You can custom the URL, headers, query strings.
 
-** Reqeust Method **
+**Reqeust Method**
 
 Every method must have an HTTP Method Attribute to specify the request method and relative URL. Six build-in attributes enable:
 `GET`, `POST`, `PUT`, `DELETE`, `HEAD` and `OPTIONS`. These attribute can only decorate method. Query string is allowable.
