@@ -7,7 +7,9 @@ namespace Restfar
 {
     public class RequestBuilder
     {
-
+        /// <summary>
+        /// Finally sended http requst.
+        /// </summary>
         private HttpRequestMessage Request;
         
         private string BaseUri;

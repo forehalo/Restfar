@@ -11,32 +11,81 @@ using System.Linq;
 
 namespace Restfar
 {
-
+    /// <summary>
+    /// Delegate to reference http response handlers.
+    /// </summary>
+    /// <param name="response" <see cref="HttpResponseMessage"/>>The raw response result.</param>
     public delegate void ResponseHandler(HttpResponseMessage response);
 
     /// <summary>
-    /// 
+    /// Adapts an invocation of an interface method into an HTTP call.
     /// </summary>
     public class ServiceMethod
     {
+        /// <summary>
+        /// regex of url path placeholder
+        /// </summary>
         const string PARAM_URL_REGEX = "{([a-zA-Z][a-zA-Z0-9_-]*)}";
-        
+
+        #region Properties
+        /// <summary>
+        /// Origin method to call.
+        /// </summary>
         private MethodInfo Method { get; set; }
+        /// <summary>
+        /// Base uri of the request.
+        /// </summary>
         private string BaseUri { get; set; }
+        /// <summary>
+        /// Relative uri of the request.
+        /// </summary>
+        private string RelativeUrl { get; set; }
+        /// <summary>
+        /// Method attributes array.
+        /// </summary>
         private Attribute[] MethodAttributes { get; set; }
+        /// <summary>
+        /// Interface attributes array.
+        /// </summary>
         private Attribute[] ServiceAttributes { get; set; }
+        /// <summary>
+        /// All parameters of called method.
+        /// </summary>
         private ParameterInfo[] Parameters { get; set; }
+        /// <summary>
+        /// Origin headers needed to parse.
+        /// As the form like <code>{"header1: content", "header2: content"}</code>
+        /// </summary>
         private string[] HeadersToParse { get; set; } = { };
+        /// <summary>
+        /// The http method of the sended request.
+        /// </summary>
         private string HttpMethod { get; set; }
+        /// <summary>
+        /// Tell whether the requst form is encoded.
+        /// </summary>
         private bool IsFormEncoded { get; set; }
+        /// <summary>
+        /// Tell whether the request if multipart.
+        /// </summary>
         private bool IsMultipart { get; set; }
         private bool HasBody { get; set; }
-        private string RelativeUrl { get; set; }
+        /// <summary>
+        /// parameters' name parsed from uri <code>Path</code> placeholder.
+        /// </summary>
         private HashSet<string> RelativeUrlParamNames { get; set; } = new HashSet<string>();
+        #endregion
 
+        #region Events
         public event ResponseHandler OnSuccess;
         public event ResponseHandler OnFailure;
+        #endregion
 
+        /// <summary>
+        /// Constructor service method
+        /// </summary>
+        /// <param name="method">the target method</param>
+        /// <param name="baseUri">base uri of all http request.</param>
         public ServiceMethod(MethodInfo method, string baseUri)
         {
             Method = method;
@@ -48,6 +97,9 @@ namespace Restfar
             ProcessService();
         }
 
+        /// <summary>
+        /// Process all about interface layer attributes.
+        /// </summary>
         private void ProcessService()
         {
             foreach(var attr in ServiceAttributes)
@@ -59,13 +111,16 @@ namespace Restfar
             }
         }
 
+        /// <summary>
+        /// Process all method layer attributes.
+        /// </summary>
         private void ProcessRequestMethod()
         {
             ParseMethodAttributes();
 
             if (string.IsNullOrEmpty(HttpMethod))
             {
-                throw new ArgumentException("HTTP method annotation is required (e.g., @GET, @POST, etc.).");
+                throw new ArgumentException("HTTP method annotation is required (e.g., GET, POST, etc.).");
             }
 
             if (!HasBody)
@@ -73,16 +128,21 @@ namespace Restfar
                 if (IsMultipart)
                 {
                     throw new ArgumentException(
-                        "Multipart can only be specified on HTTP methods with request body (e.g., @POST).");
+                        "Multipart can only be specified on HTTP methods with request body (e.g., POST).");
                 }
                 if (IsFormEncoded)
                 {
                     throw new ArgumentException("FormUrlEncoded can only be specified on HTTP methods with "
-                        + "request body (e.g., @POST).");
+                        + "request body (e.g., POST).");
                 }
             }
         }
 
+        /// <summary>
+        /// Process all parameters' attributes.
+        /// </summary>
+        /// <param name="builder" <see cref="RequestBuilder"/>>the request builder instance</param>
+        /// <param name="args">arguments passed when calling the target method.</param>
         private void ProcessParameters(RequestBuilder builder, object[] args)
         {
             int parameterCount = Parameters.Length;
@@ -92,6 +152,13 @@ namespace Restfar
             }
         }
 
+        /// <summary>
+        /// Caller proxy
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="returnType">Retrun type of target method</param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public async Task<T> Call<T>(T returnType, object[] args)
         {
             var httpClient = new HttpClient();
@@ -121,11 +188,13 @@ namespace Restfar
             }
             catch
             {
-                throw new AggregateException("Http Request return with a exception, please check your network.");
+                throw new AggregateException("Http Request returned with a exception, please check your network.");
             }
         }
 
-
+        /// <summary>
+        /// Paese http request method and headers.
+        /// </summary>
         private void ParseMethodAttributes()
         {
             foreach(var attr in MethodAttributes)
@@ -169,6 +238,12 @@ namespace Restfar
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="httpMethod"></param>
+        /// <param name="value"></param>
+        /// <param name="hasBody"></param>
         private void ParseMethodNameAndPath(string httpMethod, string value, bool hasBody = false)
         {
             if (HttpMethod != null)
@@ -195,7 +270,7 @@ namespace Restfar
                 if (queryParamMatcher.Success)
                 {
                     throw new ArgumentException("URL query string \"" + queryParams + "\" must not have replace block. "
-                        + "For dynamic query parameters use @Query.");
+                        + "For dynamic query parameters use Query attribute.");
                 }
             }
 
@@ -203,6 +278,10 @@ namespace Restfar
             ParsePathParameters(value);
         }
 
+        /// <summary>
+        /// parse all path parameters in relative uri.
+        /// </summary>
+        /// <param name="path"></param>
         private void ParsePathParameters(string path)
         {
             var matchs = Regex.Matches(path, PARAM_URL_REGEX, RegexOptions.Compiled);
@@ -212,6 +291,7 @@ namespace Restfar
                 RelativeUrlParamNames.Add(m.Groups[1].Value);
             }
         }
+
 
         private void ParseParameter(RequestBuilder builder, ParameterInfo parameter, object argument)
         {
@@ -232,7 +312,7 @@ namespace Restfar
                 else if (attr is FieldAttribute)
                 {
                     if (!IsFormEncoded)
-                        throw new ArgumentException("Field parameters can only be used with form encoding.");
+                        throw new ArgumentException("Field parameters can only be used with form encoded.");
 
                     builder.AddField((attr as FieldAttribute).Value, argument.ToString());
                 }
@@ -267,14 +347,14 @@ namespace Restfar
                     if (argument is ResponseHandler)
                         OnSuccess += (argument as ResponseHandler);
                     else
-                        throw new ArgumentException("Request success handler must be type of \"RequestSuccessHandler\".");
+                        throw new ArgumentException("Request success handler must be type of \"ResponseHandler\".");
                 }
                 else if(attr is FailureAttribute)
                 {
                     if (argument is ResponseHandler)
                         OnFailure += (argument as ResponseHandler);
                     else
-                        throw new ArgumentException("Request failure handler must be type of \"RequestFailureHandler\".");
+                        throw new ArgumentException("Request failure handler must be type of \"ResponseHandler\".");
                 }
             }
         }
