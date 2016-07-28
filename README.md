@@ -39,7 +39,7 @@ var restfar = new RestfarClient("https://api.github.com");
 var API = restfar.Create<APIService>(); // return an instance of type APIService 
 ```
 
-Then, call the API! Unimaginable!
+Then, call the APIs!
 
 ```c#
 var user = await API.GetUser('forehalo');
@@ -79,7 +79,7 @@ Task<User> GetUser([Path("user")] string user, [Query("list")] string list);
 
 ### Headers
 
-There are three ways to custom your headers, ** global(static), method(static), parameter(dynamic) **.
+There are three ways to custom your headers, **global(static), method(static), parameter(dynamic)**.
 All of them use a `Header` attribute which need an array of string as parameter.
 
 You may want to add a same header to each HTTP request. Writing `Headers` again and again is foolish. So, a convenient way:
